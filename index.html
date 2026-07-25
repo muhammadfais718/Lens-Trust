@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LensTrust - Marketplace Fotografi & Videografi Dipercayai</title>
+    <!-- Tailwind CSS Framework & FontAwesome Icons -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK (Version 9 Compatibility Mode) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans min-h-screen flex flex-col justify-between">
+
+    <!-- NAVIGATION BAR -->
+    <nav class="bg-white shadow-sm border-b sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <!-- Logo Platform -->
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-camera-retro text-indigo-600 text-2xl"></i>
+                <span class="text-xl font-bold text-gray-900">Lens<span class="text-indigo-600">Trust</span></span>
+            </div>
+
+            <!-- Jaminan Anti-Scam Badge -->
+            <div class="hidden md:flex items-center gap-2 bg-green-50 text-green-700 text-xs px-3 py-1.5 rounded-full border border-green-200 font-semibold">
+                <i class="fa-solid fa-shield-halved text-green-600"></i>
+                100% Anti-Scam Escrow System
+            </div>
+
+            <!-- Profile / Login Section -->
+            <div id="auth-status-container">
+                <button onclick="openAuthModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition flex items-center gap-2 shadow-sm">
+                    <i class="fa-solid fa-right-to-bracket"></i> Log Masuk / Daftar
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <section class="bg-gradient-to-r from-indigo-900 via-purple-900 to-indigo-800 text-white py-12 px-4">
+        <div class="max-w-4xl mx-auto text-center space-y-4">
+            <span class="bg-indigo-500/30 text-indigo-200 text-xs font-semibold px-3 py-1 rounded-full border border-indigo-400/30 inline-block">
+                <i class="fa-solid fa-check-circle mr-1"></i> Identiti IC & SSM Disahkan
+            </span>
+            <h1 class="text-3xl md:text-5xl font-extrabold leading-tight">
+                Cari & Tempah Creator Mengikut <span class="text-amber-400">Bajet Anda</span>
+            </h1>
+            <p class="text-indigo-200 text-sm md:text-base max-w-2xl mx-auto">
+                Elak deposit anda hangus di DM Instagram. Tempah videografer Rolling Car, Wedding, atau Photoshoot secara selamat melalui platform terpercaya.
+            </p>
+        </div>
+    </section>
+
+    <!-- FILTER & SEARCH SECTION -->
+    <section class="max-w-7xl mx-auto px-4 -mt-6 relative z-10">
+        <div class="bg-white p-4 rounded-xl shadow-lg border border-gray-100 flex flex-col md:flex-row gap-4 items-center justify-between">
+            
+            <!-- Tapis Mengikut Kategori Acara -->
+            <div class="w-full md:w-auto flex flex-wrap gap-2">
+                <button onclick="filterCategory('all')" class="cat-btn bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Semua</button>
+                <button onclick="filterCategory('wedding')" class="cat-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition">Wedding</button>
+                <button onclick="filterCategory('rolling')" class="cat-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition">Rolling Car</button>
+                <button onclick="filterCategory('photoshoot')" class="cat-btn bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition">Photoshoot</button>
+            </div>
+
+            <!-- Tapis Mengikut Bajet Maksimum Pelanggan -->
+            <div class="w-full md:w-auto flex items-center gap-2 border-t md:border-t-0 pt-3 md:pt-0">
+                <i class="fa-solid fa-wallet text-indigo-600"></i>
+                <label class="text-xs font-semibold text-gray-600 whitespace-nowrap">Bajet Maksimum (RM):</label>
+                <input type="number" id="max-budget-input" placeholder="Cth: 1000" oninput="filterByBudget()" class="border rounded-lg p-2 text-sm w-36 focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+        </div>
+    </section>
+
+    <!-- CREATOR DIRECTORY GRID -->
+    <section class="max-w-7xl mx-auto px-4 py-10">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-xl font-bold text-gray-900">Creator Terpercaya Disahkan</h2>
+                <p class="text-xs text-gray-500">Pilih jurugambar / videografer mengikut kepakaran program anda</p>
+            </div>
+            <span id="creator-count" class="text-xs text-gray-500 font-medium">Menunjukkan semua creator</span>
+        </div>
+
+        <!-- Grid Profil -->
+        <div id="creator-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Data dimasukkan secara dinamik oleh JavaScript -->
+        </div>
+    </section>
+
+    <!-- MODAL POPUP LOG MASUK / DAFTAR (GOOGLE, FACEBOOK, TWITTER) -->
+    <div id="auth-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 relative shadow-2xl">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-2 text-xl">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">Daftar / Log Masuk</h3>
+                <p class="text-xs text-gray-500 mt-1">Gunakan akaun sosial untuk elak penipuan identiti</p>
+            </div>
+
+            <!-- Butang Log Masuk Sosial -->
+            <div class="space-y-3">
+                <button onclick="loginWithProvider('google')" class="w-full bg-white hover:bg-gray-50 text-gray-700 font-semibold py-2.5 px-4 border border-gray-300 rounded-xl shadow-sm transition flex items-center justify-center gap-3 text-sm">
+                    <i class="fa-brands fa-google text-red-500 text-lg"></i>
+                    Teruskan dengan Google
+                </button>
+
+                <button onclick="loginWithProvider('facebook')" class="w-full bg-[#1877F2] hover:bg-[#166fe5] text-white font-semibold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center justify-center gap-3 text-sm">
+                    <i class="fa-brands fa-facebook text-lg"></i>
+                    Teruskan dengan Facebook
+                </button>
+
+                <button onclick="loginWithProvider('twitter')" class="w-full bg-black hover:bg-gray-800 text-white font-semibold py-2.5 px-4 rounded-xl shadow-sm transition flex items-center justify-center gap-3 text-sm">
+                    <i class="fa-brands fa-x-twitter text-lg"></i>
+                    Teruskan dengan Twitter (X)
+                </button>
+            </div>
+
+            <p class="text-[11px] text-gray-400 text-center mt-6">
+                Dengan mendaftar, anda bersetuju dengan Terma & Syarat serta Sistem Perlindungan Escrow LensTrust.
+            </p>
+        </div>
+    </div>
+
+    <!-- MODAL TEMPAHAN & SET BAJET PELANGGAN -->
+    <div id="booking-modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div class="bg-white rounded-xl max-w-lg w-full p-6 relative shadow-2xl max-h-[90vh] overflow-y-auto">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            
+            <div class="flex items-center gap-2 mb-1">
+                <i class="fa-solid fa-shield-check text-green-500 text-lg"></i>
+                <h3 class="text-xl font-bold text-gray-900" id="modal-creator-name">Tempah Servis</h3>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Sistem Escrow: Bayaran disimpan selamat sehingga tugasan/album diterima.</p>
+            
+            <form id="booking-form" onsubmit="submitBooking(event)" class="space-y-4">
+                <input type="hidden" id="selected-creator-id">
+                
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nama Penuh Pelanggan</label>
+                    <input type="text" id="cust-name" required placeholder="Nama penuh anda" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">No. WhatsApp</label>
+                        <input type="tel" id="cust-phone" required placeholder="01X-XXXXXXX" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tarikh Program</label>
+                        <input type="date" id="event-date" required class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Jenis Program</label>
+                        <select id="event-type" class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <option value="Wedding / Perkahwinan">Wedding / Perkahwinan</option>
+                            <option value="Rolling Car Video">Rolling Car Video</option>
+                            <option value="Photoshoot Peribadi/Produk">Photoshoot Peribadi/Produk</option>
+                            <option value="Event / Majlis">Event / Majlis</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Bajet Anda (RM)</label>
+                        <input type="number" id="cust-budget" required placeholder="Cth: 500" class="w-full border rounded-lg p-2.5 text-sm font-semibold text-indigo-600 focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Lokasi & Keperluan Khas</label>
+                    <textarea id="cust-notes" rows="3" placeholder="Contoh: Lokasi Penggambaran di Genting Highlands, perlukan video rolling sinematik 4K..." class="w-full border rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                </div>
+
+                <button type="submit" id="submit-btn" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition shadow-md flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> Hantar Tempahan & Simpan
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t py-6 text-center text-xs text-gray-500">
+        <p>&copy; 2026 LensTrust. Platform Marketplace Fotografi & Videografi Selamat.</p>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC & FIREBASE INTEGRATION -->
+    <script>
+        // 1. KONFIGURASI FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemoConfigForTestingPurposeOnly12345",
+            authDomain: "lenstrust-demo.firebaseapp.com",
+            projectId: "lenstrust-demo",
+            storageBucket: "lenstrust-demo.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef123456"
+        };
+
+        // Inisialisasi Firebase & Firestore
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // 2. DATA DUMMY CREATOR (JURUGAMBAR & VIDEOGRAFER)
+        const creators = [
+            {
+                id: 1,
+                name: "Aiman Studio Production",
+                category: "wedding",
+                categoryLabel: "Wedding Specialist",
+                location: "Kuala Lumpur & Selangor",
+                startingPrice: 1200,
+                rating: 4.9,
+                verified: true,
+                image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=400",
+                desc: "Pakar penggambaran majlis pernikahan, bersanding, dan post-wedding secara candid & sinematik."
+            },
+            {
+                id: 2,
+                name: "Apex Motion Cars",
+                category: "rolling",
+                categoryLabel: "Rolling Car & Automotif",
+                location: "Penang & Utara",
+                startingPrice: 350,
+                rating: 5.0,
+                verified: true,
+                image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400",
+                desc: "Penggambaran video kereta bergerak (rolling shot) 4K, rigging keselamatan khas, dan drone shot."
+            },
+            {
+                id: 3,
+                name: "Siti Visual Studio",
+                category: "photoshoot",
+                categoryLabel: "Portrait & Fashion",
+                location: "Shah Alam",
+                startingPrice: 250,
+                rating: 4.8,
+                verified: true,
+                image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=400",
+                desc: "Sesuai untuk photoshoot peribadi, baju raya, graduan, dan katalog produk perniagaan."
+            }
+        ];
+
+        let activeCategory = 'all';
+        let currentUser = null;
+
+        // 3. FUNGSI PAPAR CREATOR KE MUKA DEPAN
+        function renderCreators(list) {
+            const grid = document.getElementById('creator-grid');
+            grid.innerHTML = '';
+
+            document.getElementById('creator-count').innerText = `Menunjukkan ${list.length} creator yang ditemui`;
+
+            if(list.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-10 bg-white rounded-xl border border-dashed">
+                        <i class="fa-solid fa-circle-exclamation text-3xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500 font-medium">Tiada creator ditemui mengikut tapisan atau bajet anda.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            list.forEach(c => {
+                grid.innerHTML += `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition flex flex-col justify-between">
+                        <div>
+                            <div class="relative h-48 bg-gray-200">
+                                <img src="${c.image}" class="w-full h-full object-cover">
+                                ${c.verified ? `
+                                    <span class="absolute top-3 right-3 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow">
+                                        <i class="fa-solid fa-circle-check"></i> Verified Pro
+                                    </span>
+                                ` : ''}
+                            </div>
+                            <div class="p-5">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <h3 class="font-bold text-lg text-gray-900">${c.name}</h3>
+                                        <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1"></i>${c.location}</p>
+                                    </div>
+                                    <div class="text-sm font-semibold text-amber-500 flex items-center gap-1">
+                                        <i class="fa-solid fa-star"></i> ${c.rating}
+                                    </div>
+                                </div>
+                                <p class="text-xs text-gray-600 mb-3 line-clamp-2">${c.desc}</p>
+                                <span class="inline-block bg-indigo-50 text-indigo-700 text-xs px-2.5 py-1 rounded-md font-semibold mb-4">${c.categoryLabel}</span>
+                            </div>
+                        </div>
+
+                        <div class="p-5 pt-0">
+                            <div class="flex items-center justify-between border-t pt-3">
+                                <div>
+                                    <span class="text-[10px] text-gray-400 uppercase font-bold block">Pakej Asas Dari</span>
+                                    <p class="text-md font-extrabold text-gray-900">RM ${c.startingPrice}</p>
+                                </div>
+                                <button onclick="openModal(${c.id}, '${c.name}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition">
+                                    Tempah / Set Bajet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 4. TAPIS KATEGORI & BAJET
+        function filterCategory(cat) {
+            activeCategory = cat;
+            filterByBudget();
+        }
+
+        function filterByBudget() {
+            const maxBudget = parseFloat(document.getElementById('max-budget-input').value);
+            let filtered = creators;
+
+            if(activeCategory !== 'all') {
+                filtered = filtered.filter(c => c.category === activeCategory);
+            }
+
+            if(!isNaN(maxBudget) && maxBudget > 0) {
+                filtered = filtered.filter(c => c.startingPrice <= maxBudget);
+            }
+
+            renderCreators(filtered);
+        }
+
+        // 5. SOCIAL AUTHENTICATION (GOOGLE, FACEBOOK, TWITTER)
+        function loginWithProvider(providerName) {
+            let provider;
+            if (providerName === 'google') provider = new firebase.auth.GoogleAuthProvider();
+            else if (providerName === 'facebook') provider = new firebase.auth.FacebookAuthProvider();
+            else if (providerName === 'twitter') provider = new firebase.auth.TwitterAuthProvider();
+
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    db.collection("users").doc(user.uid).set({
+                        uid: user.uid,
+                        name: user.displayName,
+                        email: user.email,
+                        photoURL: user.photoURL,
+                        provider: providerName,
+                        lastLogin: new Date().toISOString()
+                    }, { merge: true });
+
+                    alert(`Selamat datang, ${user.displayName}! Log masuk berjaya melalui ${providerName.toUpperCase()}.`);
+                    closeAuthModal();
+                })
+                .catch((error) => {
+                    // Fallback simulasi UI jika API key ujian
+                    updateUISimulation(providerName);
+                    closeAuthModal();
+                });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                location.reload();
+            }).catch(() => location.reload());
+        }
+
+        auth.onAuthStateChanged((user) => {
+            currentUser = user;
+            const container = document.getElementById('auth-status-container');
+            if (user) {
+                container.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <img src="${user.photoURL || 'https://via.placeholder.com/40'}" class="w-8 h-8 rounded-full border">
+                        <span class="text-sm font-semibold text-gray-800 hidden sm:inline">${user.displayName}</span>
+                        <button onclick="logout()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border font-medium">Log Keluar</button>
+                    </div>
+                `;
+            }
+        });
+
+        function updateUISimulation(provider) {
+            const container = document.getElementById('auth-status-container');
+            container.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xs">US</div>
+                    <span class="text-sm font-semibold text-gray-800 hidden sm:inline">Pengguna Demo (${provider})</span>
+                    <button onclick="logout()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded-lg border font-medium">Log Keluar</button>
+                </div>
+            `;
+            alert(`[Demo Mode]\nBerjaya log masuk sebagai Pengguna Demo (${provider.toUpperCase()})`);
+        }
+
+        // 6. SIMPAN TEMPAHAN KE FIREBASE
+        async function submitBooking(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menghantar...`;
+
+            const bookingData = {
+                creatorId: document.getElementById('selected-creator-id').value,
+                creatorName: document.getElementById('modal-creator-name').innerText.replace('Tempah ', ''),
+                customerName: document.getElementById('cust-name').value,
+                customerPhone: document.getElementById('cust-phone').value,
+                eventDate: document.getElementById('event-date').value,
+                eventType: document.getElementById('event-type').value,
+                proposedBudget: parseFloat(document.getElementById('cust-budget').value),
+                notes: document.getElementById('cust-notes').value,
+                status: 'Pending Escrow',
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await db.collection("bookings").add(bookingData);
+                alert(`✅ TEMPAHAN BERJAYA HANTAR!\n\nTempahan untuk ${bookingData.creatorName} bernilai RM${bookingData.proposedBudget} telah direkodkan secara selamat.\n\nCreator akan menghubungi WhatsApp anda (${bookingData.customerPhone}).`);
+                closeModal();
+            } catch (error) {
+                alert(`✅ TEMPAHAN SIMULASI BERJAYA!\n\nData tempahan bajet RM${bookingData.proposedBudget} untuk ${bookingData.creatorName} telah diterima.`);
+                closeModal();
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane"></i> Hantar Tempahan & Simpan`;
+            }
+        }
+
+        // FUNGSI MODAL CONTROL
+        function openAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('auth-modal').classList.add('flex');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+            document.getElementById('auth-modal').classList.remove('flex');
+        }
+
+        function openModal(id, name) {
+            document.getElementById('selected-creator-id').value = id;
+            document.getElementById('modal-creator-name').innerText = `Tempah ${name}`;
+            document.getElementById('booking-modal').classList.remove('hidden');
+            document.getElementById('booking-modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('booking-modal').classList.add('hidden');
+            document.getElementById('booking-modal').classList.remove('flex');
+            document.getElementById('booking-form').reset();
+        }
+
+        // Muat turun data pertama kali
+        renderCreators(creators);
+    </script>
+</body>
+</html>
